@@ -1,4 +1,4 @@
-name: Validate Johnshall upstream
+name: Sync Johnshall routing rules
 on:
   schedule:
     - cron: '23 2 * * *'
@@ -30,20 +30,20 @@ jobs:
         run: python3 -m unittest discover -s tests -v
       - name: Download and validate in memory
         run: python3 scripts/sync.py
-      - name: Commit only validated metadata
+      - name: Commit only validated routing data
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          git add -- generated/validation.json
+          git add -- generated/validation.json generated/proxy.list generated/reject.list
           if git diff --cached --quiet; then
             echo 'Validated upstream is unchanged.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Update validated Johnshall metadata'
+          git commit -m 'Update validated Johnshall routing rules'
           auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
           echo "::add-mask::$auth"
           git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin HEAD:main

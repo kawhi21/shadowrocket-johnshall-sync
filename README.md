@@ -1,25 +1,39 @@
 # Shadowrocket Johnshall Safe Sync
 
-每天北京时间 10:23（UTC 02:23）检查公开上游；GitHub 调度可能延迟。也支持 Actions → Validate Johnshall upstream → Run workflow。
+每天北京时间 10:23（UTC 02:23）下载、校验并生成可供 Shadowrocket 引用的纯规则集。GitHub 调度与 iPad 后台刷新不保证准点，Actions 支持手动运行。
 
-上游：https://github.com/Johnshall/Shadowrocket-ADBlock-Rules-Forever/blob/release/sr_cnip_ad.conf
+## 服务端输出
 
-## 输出与隐私
+- generated/proxy.list：上游起始代理规则块。
+- generated/reject.list：随后广告拒绝规则块。
+- generated/validation.json：上游哈希、数量及生成文件的哈希。
 
-仅发布 `generated/validation.json`：固定来源、SHA-256、字节数、规则类型和策略数量。**它不是 Shadowrocket 配置或订阅，不能导入。** 原始上游只在内存中校验，不写入仓库、日志或 artifact。不读取私人订阅、节点、AI-Stable 或任何本地配置，不需要添加代理 secrets。
+来源：Johnshall/Shadowrocket-ADBlock-Rules-Forever 的 release/sr_cnip_ad.conf。数据归属与 CC BY-SA 4.0 授权见 [NOTICE.md](NOTICE.md)。仅输出白名单规则字段，去掉原始配置段、注释、脚本、重写、MITM 与代理信息；IPv6 CIDR 规范化为 IP-CIDR6。不读取私人订阅、不需要代理 secrets。
 
-`scripts/sync.py` 拒绝重定向、非 200、异常大小/编码、HTML、未知配置段、重复段、异常规则语法/策略和常见凭据标记；要求至少一万条规则、广告拒绝规则、唯一 CN 直连及结尾默认代理。格式变化会使工作流失败，需人工审查后调整。此为结构验证，不保证上游每条规则正确，也不验证实际代理连通性。
+## 保持本地扩展的架构
 
-全部校验成功后才原子替换报告。失败不提交，保留最后合格报告。未变化不产生提交；变化通过 Git 历史保留，运行时间与失败记录在 Actions 中查看。报告哈希对应所下载原文件的全部字节，并非重新分发该文件。
+本地 Johnshall-AI-Extended.conf 始终保持为当前配置，AI-Stable 与 AI 模块留在本地。它通过“通用 → 包含配置”包含本地 Johnshall-Auto-Rules.conf，后者引用两份远程 RULE-SET。日常只更新远程列表，不再导入官方原版。
 
-## 文件与验收
+[本地基础配置样例](templates/Johnshall-Auto-Rules.conf.example) 下载后保存为 Johnshall-Auto-Rules.conf。不含 update-url、私人节点、AI 分组或模块。它保留经审查的上游 General 基线和路由，不包含 Google URL 重写、MITM 或脚本；未来 General 变化需另行审查。
 
-- `.github/workflows/sync.yml`：定时/手动/脚本变更触发，互斥执行、五分钟超时、固定 checkout 提交、提交步骤临时认证。
-- `scripts/sync.py`：仅依赖 Python 标准库。
-- `tests/test_sync.py`：合成样本测试成功、幂等、异常下载、凭据输入和失败保留。
+## 一次性 iPad 接入及验收：尚需设备端完成
 
-运行 `python3 -m unittest discover -s tests -v`，然后 `python3 scripts/sync.py`。访问 Actions 检查首次运行是否成功，以及生成报告。若组织策略或分支保护阻止写入，需要仓库管理员解决，脚本不会强制推送。
+1. 确认远程列表可以匿名下载。仓库私有时不能直接使用 raw 地址；不要在 URL 中放 GitHub token。尚未获准公开时先不要接入。
+2. 在文件 App 备份原扩展配置与 AI 模块。停用会调用 shadowrocket://config/add/… 的旧导入自动化。
+3. 将基础配置样例保存为本地文件并加入 Shadowrocket，不把它单独用作生产配置。如果导入过程激活它，立即恢复原扩展配置。无法远程替用户验证该导入行为。
+4. 在 Johnshall-AI-Extended.conf → 通用 → 包含配置，将 sr_cnip_ad.conf 改为 Johnshall-Auto-Rules.conf。不删原文件，不改 AI-Stable，不重建 AI 模块。
+5. 使用/编译原扩展配置。确认两个规则集 URL 成功；蓝色对勾仍为扩展配置；ChatGPT/Muse AI 命中 AI-Stable 且走原日本节点；国内直连及普通国外代理正常。
+6. Shadowrocket 设置中，配置自动更新开启后台更新，更新间隔设为 1 天；系统后台 App 刷新允许 Shadowrocket。入口以设备版本为准。旧导入自动化保持停用。
+7. 至少观察一次后台刷新，确认远程规则更新而当前配置、节点选择、AI 规则未变。在此之前不声称端到端完成。
 
-## Shadowrocket
+依据：[LOWERTOP/Shadowrocket Wiki](https://github.com/LOWERTOP/Shadowrocket/wiki) 的自动更新、包含配置和规则集章节。无 update-url 的本地配置可只更新其远程资源；iOS 调度可能延迟，重启或强制结束 App 后后台任务可能无法启动。本文架构仍需设备版本实际验收。
 
-保持当前 Johnshall-AI-Extended.conf 和 AI-Stable 在本地。此项目仅自动验证公共上游，不自动更新 iPad，也不导入或切换任何配置。不要将私人节点、完整订阅或 GitHub token 加入仓库或订阅 URL。
+## 验证和失败保护
+
+运行 python3 -m unittest discover -s tests -v，然后 python3 scripts/sync.py。
+
+校验 HTTP 状态、大小、编码、配置段、规则语法、关键策略及凭据标记。只允许上游顺序为连续 PROXY → REJECT → GEOIP,CN,DIRECT → FINAL,PROXY；顺序或格式变化会停止发布，需人工审查。不会简单按策略重新排序。测试将转换后的规则逐条还原对比原序列。
+
+验证通过后才写出，Action 一次提交全部三份文件；下载/校验失败不提交，GitHub 保留最后合格版本及历史。生成无变化不重复提交。提交失败不会强制推送。
+
+结构验证不保证每条上游规则正确，不能代替设备测试。客户端分别下载两个列表，网络失败可能造成其中一个未更新，须核对成功状态。回退时恢复备份，或将包含配置改回原 sr_cnip_ad.conf 并重新编译原扩展配置。

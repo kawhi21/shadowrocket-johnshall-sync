@@ -1,4 +1,4 @@
-"""Validate public upstream in memory; publish fixed-schema metadata only."""
+"""Publish validated, credential-free routing lists; never publish a proxy config."""
 import collections
 import hashlib
 import ipaddress
@@ -34,7 +34,7 @@ def download():
     require(MIN_BYTES <= len(body) <= MAX_BYTES)
     return body
 
-def validate(body):
+def parse_and_validate(body):
     require(MIN_BYTES <= len(body) <= MAX_BYTES)
     try:
         text = body.decode('utf-8-sig')
@@ -86,33 +86,70 @@ def validate(body):
     require(rules[-1] == ('FINAL', 'PROXY'))
     require(('GEOIP', 'CN', 'DIRECT') in rules)
     require(policies['REJECT'] >= 1000 and policies['PROXY'] >= 10)
-    # Only fixed keys, numeric counts and a content hash cross the publication boundary.
-    return {'schema_version': 1, 'source': SOURCE, 'validation': 'passed',
+    report = {'schema_version': 2, 'source': SOURCE, 'validation': 'passed',
             'sha256': hashlib.sha256(body).hexdigest(), 'bytes': len(body),
             'rule_count': len(rules), 'rule_types': dict(sorted(counts.items())),
             'policies': dict(sorted(policies.items()))}
+    return report, rules
+
+def validate(body):
+    return parse_and_validate(body)[0]
+
+def build_outputs(body):
+    report, rules = parse_and_validate(body)
+    # A fixed local RULE-SET wrapper can preserve upstream order only for this topology.
+    # Fail closed if upstream ever interleaves policies or changes the CN/final tail.
+    phases = []
+    for rule in rules:
+        if not phases or phases[-1] != rule[-1]:
+            phases.append(rule[-1])
+    require(phases == ['PROXY', 'REJECT', 'DIRECT', 'PROXY'])
+    require(rules[-2:] == [('GEOIP', 'CN', 'DIRECT'), ('FINAL', 'PROXY')])
+    header = ('# Derived from Johnshall/Shadowrocket-ADBlock-Rules-Forever\n'
+              '# License: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/\n'
+              '# Modified: routing-only, comments/settings removed, IPv6 type normalized.\n')
+    outputs = {}
+    for policy, name in [('PROXY', 'proxy.list'), ('REJECT', 'reject.list')]:
+        lines = []
+        for rule in rules[:-2]:
+            if rule[-1] != policy:
+                continue
+            kind, value = rule[:-1]
+            if kind == 'IP-CIDR' and ':' in value:
+                kind = 'IP-CIDR6'
+            lines.append(f'{kind},{value.lower()}')
+        outputs[name] = (header + '\n'.join(lines) + '\n').encode()
+    report['outputs'] = {name: {'sha256': hashlib.sha256(data).hexdigest(),
+                              'bytes': len(data)} for name, data in outputs.items()}
+    outputs['validation.json'] = (json.dumps(report, sort_keys=True, indent=2) + '\n').encode()
+    return outputs
 
 def sync(destination, fetch=download):
-    report = validate(fetch())  # No output mutation before all checks pass.
-    content = (json.dumps(report, sort_keys=True, indent=2) + '\n').encode()
-    destination = Path(destination)
-    if destination.exists() and destination.read_bytes() == content:
+    outputs = build_outputs(fetch())  # No mutation before every validation passes.
+    directory = Path(destination).parent
+    if all((directory / name).exists() and (directory / name).read_bytes() == data
+           for name, data in outputs.items()):
         return False
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    fd, name = tempfile.mkstemp(prefix='.report-', dir=destination.parent)
+    directory.mkdir(parents=True, exist_ok=True)
+    staged = []
     try:
-        with os.fdopen(fd, 'wb') as stream:
-            stream.write(content)
-        os.replace(name, destination)
+        for filename, data in outputs.items():
+            fd, name = tempfile.mkstemp(prefix='.validated-', dir=directory)
+            staged.append((name, directory / filename))
+            with os.fdopen(fd, 'wb') as stream:
+                stream.write(data)
+        for name, target in staged:
+            os.replace(name, target)
     finally:
-        if os.path.exists(name):
-            os.unlink(name)
+        for name, _ in staged:
+            if os.path.exists(name):
+                os.unlink(name)
     return True
 
 if __name__ == '__main__':
     try:
         changed = sync('generated/validation.json')
-        print('Validation passed; metadata updated.' if changed else 'Validation passed; unchanged.')
+        print('Validation passed; routing lists updated.' if changed else 'Validation passed; unchanged.')
     except Exception:
         # Never echo downloaded bytes, remote errors, credentials or response headers.
         print('Sync failed; last-known-good metadata preserved.', file=sys.stderr)

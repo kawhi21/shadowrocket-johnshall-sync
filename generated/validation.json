@@ -1,0 +1,20 @@
+{
+  "bytes": 2066747,
+  "policies": {
+    "DIRECT": 1,
+    "PROXY": 391,
+    "REJECT": 51861
+  },
+  "rule_count": 52253,
+  "rule_types": {
+    "DOMAIN-KEYWORD": 2,
+    "DOMAIN-SUFFIX": 52104,
+    "FINAL": 1,
+    "GEOIP": 1,
+    "IP-CIDR": 145
+  },
+  "schema_version": 1,
+  "sha256": "6f1b4f6500da9058ff63225afbec324a64f916c8526d9c480571c74462f08488",
+  "source": "https://raw.githubusercontent.com/Johnshall/Shadowrocket-ADBlock-Rules-Forever/release/sr_cnip_ad.conf",
+  "validation": "passed"
+}

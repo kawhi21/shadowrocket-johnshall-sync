@@ -1,0 +1,12 @@
+#!name=AI public routing
+#!desc=Optional AI routing to the built-in PROXY policy; no private group required.
+[Rule]
+DOMAIN-SUFFIX,muse.ai,PROXY
+DOMAIN,hatch.metaaivm.com,PROXY
+DOMAIN-SUFFIX,chatgpt.com,PROXY
+DOMAIN-SUFFIX,openai.com,PROXY
+DOMAIN-SUFFIX,oaistatic.com,PROXY
+DOMAIN-SUFFIX,oaiusercontent.com,PROXY
+DOMAIN-SUFFIX,claude.ai,PROXY
+DOMAIN-SUFFIX,anthropic.com,PROXY
+DOMAIN-SUFFIX,gemini.google.com,PROXY

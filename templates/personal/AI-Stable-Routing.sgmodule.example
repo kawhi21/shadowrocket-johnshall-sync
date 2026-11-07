@@ -1,0 +1,12 @@
+#!name=AI stable routing - local template
+#!desc=Requires the local AI-Stable group. Bind and verify it separately on every device.
+[Rule]
+DOMAIN-SUFFIX,muse.ai,AI-Stable
+DOMAIN,hatch.metaaivm.com,AI-Stable
+DOMAIN-SUFFIX,chatgpt.com,AI-Stable
+DOMAIN-SUFFIX,openai.com,AI-Stable
+DOMAIN-SUFFIX,oaistatic.com,AI-Stable
+DOMAIN-SUFFIX,oaiusercontent.com,AI-Stable
+DOMAIN-SUFFIX,claude.ai,AI-Stable
+DOMAIN-SUFFIX,anthropic.com,AI-Stable
+DOMAIN-SUFFIX,gemini.google.com,AI-Stable

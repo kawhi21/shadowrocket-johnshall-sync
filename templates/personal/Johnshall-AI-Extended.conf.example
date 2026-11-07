@@ -1,0 +1,9 @@
+# NEW DEVICE ONLY. Never overwrite an existing working overlay with this template.
+# Save the base as Johnshall-Auto-Rules.conf; keep both files local.
+# PROXY is a safe initial member, not a fixed Japan-node binding.
+# Add/select your own subscribed node in AI-Stable locally before declaring setup complete.
+[General]
+include = Johnshall-Auto-Rules.conf
+
+[Proxy Group]
+AI-Stable = select, PROXY

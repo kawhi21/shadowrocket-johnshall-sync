@@ -5,7 +5,9 @@ The generated routing lists are derived from Johnshall / Moshel's
 `release/sr_cnip_ad.conf`.
 
 Upstream rule data is licensed under [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/).
-The derived rule data remains under that license.
+The derived rule data remains under that license. Public and personal
+configuration/module templates in templates/ are also distributed under
+CC BY-SA 4.0. Original scripts, tests and workflows use MIT; see LICENSE.
 
 Changes: extract routing rules only; remove settings, rewrites, MITM and comments;
 split the original consecutive PROXY and REJECT blocks without changing their order;

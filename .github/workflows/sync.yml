@@ -28,8 +28,12 @@ jobs:
           persist-credentials: false
       - name: Test failure protection
         run: python3 -m unittest discover -s tests -v
+      - name: Check public source before download
+        run: python3 scripts/check_repo.py
       - name: Download and validate in memory
         run: python3 scripts/sync.py
+      - name: Verify all generated hashes and templates before committing
+        run: python3 scripts/check_repo.py
       - name: Commit only validated routing data
         env:
           GH_TOKEN: ${{ github.token }}
@@ -47,3 +51,7 @@ jobs:
           auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
           echo "::add-mask::$auth"
           git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin HEAD:main
+      - name: Publish verified versioned snapshot after successful sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/publish_release.py --commit "$(git rev-parse HEAD)"

@@ -1,0 +1,21 @@
+name: Check public starter and privacy
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  offline-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Tests (no upstream network or private subscriptions)
+        run: python3 -m unittest discover -s tests -v
+      - name: Templates, published hashes and credential scan
+        run: python3 scripts/check_repo.py
+      - name: Build verified versioned snapshot without publishing
+        run: python3 scripts/snapshot.py build --commit "$(git rev-parse HEAD)"

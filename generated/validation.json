@@ -1,30 +1,30 @@
 {
-  "bytes": 2150115,
+  "bytes": 2096321,
   "outputs": {
     "proxy.list": {
       "bytes": 12558,
       "sha256": "db0bba57143cca89f9e983fb02b0bb105e30b63300dc1d08429210e4c50bf184"
     },
     "reject.list": {
-      "bytes": 1755208,
-      "sha256": "53d1fa827198103f8ab70cee812ed1c67b31dd0c381df88969c33574deaaa7e8"
+      "bytes": 1710339,
+      "sha256": "fff972cb752c4a34a1ffc103156f18da9605441eba2b13200cc6fdd255e47e4e"
     }
   },
   "policies": {
     "DIRECT": 1,
     "PROXY": 391,
-    "REJECT": 53959
+    "REJECT": 52684
   },
-  "rule_count": 54351,
+  "rule_count": 53076,
   "rule_types": {
     "DOMAIN-KEYWORD": 2,
-    "DOMAIN-SUFFIX": 54202,
+    "DOMAIN-SUFFIX": 52927,
     "FINAL": 1,
     "GEOIP": 1,
     "IP-CIDR": 145
   },
   "schema_version": 2,
-  "sha256": "4246e0277693105ff1ae2a084ce27d98b56fbfc0627e404b0af2521202aa7ca6",
+  "sha256": "cd82e90964cde31a0fbfee900c6094834b9cf4c223eae5f40388663d7d490bff",
   "source": "https://raw.githubusercontent.com/Johnshall/Shadowrocket-ADBlock-Rules-Forever/release/sr_cnip_ad.conf",
   "validation": "passed"
 }

@@ -3,3 +3,9 @@ __pycache__/
 *.conf
 *.zip
 .env*
+dist/
+private/
+backups/
+# Reviewed credential-free public configuration entrypoints only.
+!templates/Public-Starter.conf
+!templates/Johnshall-Auto-Rules.conf

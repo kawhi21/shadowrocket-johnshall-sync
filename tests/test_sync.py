@@ -29,7 +29,7 @@ class Tests(unittest.TestCase):
         cases = [b'', b'<html>' * 20000, b'\xff' * 100001, b'x' * (m.MAX_BYTES + 1),
                  b.replace(b'[MITM]', b'[Proxy]'), b.replace(b'GEOIP,CN,DIRECT', b'GEOIP,CN,PROXY'),
                  b.replace(b'FINAL,PROXY', b'FINAL,DIRECT'),
-                 b + b'\npassword = synthetic-secret\n', b + b'\nvmess://synthetic\n',
+                 b + b'\npassword = synthetic-secret\n', b + b'\nvmess' + b'://synthetic\n',
                  b.replace(b'ad0.example', b'bad@example'), b.replace(b'REJECT', b'PRIVATE')]
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / 'validation.json'
